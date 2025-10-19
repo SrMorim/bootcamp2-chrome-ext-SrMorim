@@ -1,0 +1,159 @@
+name: CI/CD - Build, Test & Release
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-build:
+    name: Build Extension & Run E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        continue-on-error: false
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 30
+
+      - name: Upload extension package
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-zip
+          path: dist/extension.zip
+          retention-days: 90
+
+      - name: Upload dist folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-dist
+          path: dist/
+          retention-days: 90
+
+  release:
+    name: Create GitHub Release
+    needs: test-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download extension artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-zip
+          path: ./artifacts
+
+      - name: Download playwright report
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-report
+          path: ./playwright-report
+
+      - name: Get version from manifest
+        id: get_version
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if release exists
+        id: check_release
+        run: |
+          if gh release view v${{ steps.get_version.outputs.version }} &>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Create Release
+        if: steps.check_release.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          name: Release ${{ steps.get_version.outputs.tag }}
+          body: |
+            ## Bootcamp Pomodoro ${{ steps.get_version.outputs.tag }}
+
+            ### 🎉 Entrega Intermediária - Docker + CI/CD
+
+            **Novidades:**
+            - ✅ Testes E2E automatizados com Playwright
+            - 🐋 Containerização com Docker
+            - 🚀 CI/CD com GitHub Actions
+            - 📊 Relatórios de teste automatizados
+            - 📦 Build e release automatizados
+
+            ### 📥 Download
+            Baixe o arquivo `bootcamp-pomodoro-${{ steps.get_version.outputs.tag }}.zip` abaixo e siga as instruções de instalação no README.
+
+            ### 🧪 Testes
+            Todos os testes E2E passaram com sucesso:
+            - ✓ Carregamento da extensão
+            - ✓ Funcionalidade do timer
+            - ✓ Persistência de estado
+            - ✓ Página de configurações
+
+            ---
+            *Release gerada automaticamente via GitHub Actions*
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/extension.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rename ZIP for release
+        if: steps.check_release.outputs.exists == 'false'
+        run: |
+          mv artifacts/extension.zip artifacts/bootcamp-pomodoro-${{ steps.get_version.outputs.tag }}.zip
+
+      - name: Upload renamed ZIP to release
+        if: steps.check_release.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          files: artifacts/bootcamp-pomodoro-${{ steps.get_version.outputs.tag }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

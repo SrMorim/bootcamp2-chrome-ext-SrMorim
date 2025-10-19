@@ -1,0 +1,30 @@
+{
+  "name": "bootcamp-pomodoro",
+  "version": "1.1.0",
+  "description": "Timer Pomodoro para Chrome - Entrega Intermediária com Docker e CI/CD",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-extension.mjs",
+    "test:e2e": "playwright test --reporter=list,html",
+    "test:e2e:ui": "playwright test --ui",
+    "test": "npm run build && npm run test:e2e",
+    "ci": "npm ci && npm run test",
+    "playwright:install": "playwright install --with-deps chromium"
+  },
+  "keywords": [
+    "pomodoro",
+    "timer",
+    "chrome-extension",
+    "productivity",
+    "manifest-v3"
+  ],
+  "author": "SrMorim",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.46.0",
+    "archiver": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

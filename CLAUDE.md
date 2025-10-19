@@ -4,11 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Bootcamp Pomodoro** is a Chrome extension that implements a Pomodoro timer with customizable settings. This is the initial delivery project for Bootcamp II, built with Chrome Extension Manifest V3.
+**Bootcamp Pomodoro** is a Chrome extension that implements a Pomodoro timer with customizable settings. This is part of the Bootcamp II project, built with Chrome Extension Manifest V3.
+
+**Deliveries:**
+- v1.0.0: Initial delivery - Functional Pomodoro timer with Manifest V3
+- v1.1.0: Intermediate delivery - Docker + CI/CD + E2E Tests with Playwright
 
 ## Project Type
 
-Chrome Extension (Manifest V3) - Pomodoro Timer
+Chrome Extension (Manifest V3) - Pomodoro Timer with E2E Testing & CI/CD
 
 ## Key Features
 
@@ -22,24 +26,67 @@ Chrome Extension (Manifest V3) - Pomodoro Timer
 
 ## Development Commands
 
-This project uses vanilla JavaScript without build tools. To develop:
+### Setup
 
 ```bash
-# No build step required - load directly in Chrome
+# Install dependencies
+npm install
 
-# To test in Chrome:
-# 1. Open chrome://extensions
-# 2. Enable "Developer mode"
-# 3. Click "Load unpacked"
-# 4. Select the project root directory
+# Install Playwright browsers
+npm run playwright:install
+```
 
-# To create a release ZIP:
-zip -r bootcamp-pomodoro-v1.0.0.zip manifest.json icons/ src/ -x "*.py" "*.md" ".git/*"
+### Build & Test
 
-# To regenerate icons (if needed):
+```bash
+# Build extension to dist/
+npm run build
+
+# Run E2E tests
+npm run test:e2e
+
+# Run tests with UI (interactive mode)
+npm run test:e2e:ui
+
+# Full CI flow (build + test)
+npm test
+```
+
+### Docker Commands
+
+```bash
+# Build Docker image
+docker compose build
+
+# Run tests in container
+docker compose run --rm e2e
+
+# Or simply
+docker compose up
+
+# View Playwright report after tests
+npx playwright show-report
+```
+
+### Manual Testing in Chrome
+
+```bash
+# 1. Build the extension
+npm run build
+
+# 2. Open chrome://extensions
+# 3. Enable "Developer mode"
+# 4. Click "Load unpacked"
+# 5. Select the dist/ directory
+```
+
+### Helper Scripts
+
+```bash
+# Regenerate icons (if needed)
 python3 create_simple_icons.py
 
-# To regenerate sounds (if needed):
+# Regenerate sounds (if needed)
 python3 create_sounds.py
 ```
 
@@ -152,13 +199,88 @@ The `docs/` folder contains a landing page deployed to GitHub Pages:
 └── LICENSE               # MIT License
 ```
 
-## Future Enhancements (Beyond Initial Delivery)
+## E2E Testing (Intermediate Delivery)
 
-Ideas for intermediate/final deliveries:
+### Test Structure
+
+Tests are located in `tests/` and use Playwright to test the extension in Chromium:
+
+- **extension.spec.ts**: Extension loading, manifest validation, permissions
+- **timer.spec.ts**: Timer functionality (start, pause, reset, skip, countdown)
+- **persistence.spec.ts**: State persistence across popup reopens
+- **options.spec.ts**: Settings page functionality
+
+### Test Configuration
+
+- **playwright.config.ts**: Configures Chromium with extension loaded
+- Headless mode for CI
+- Loads extension from `dist/` directory
+- Generates HTML reports and screenshots on failure
+
+### Writing New Tests
+
+```typescript
+// Open popup
+const popup = await openPopup();
+
+// Interact with elements
+await popup.click('#startBtn');
+await popup.waitForTimeout(2000);
+
+// Assert state
+const timerDisplay = await popup.locator('#timerDisplay').textContent();
+expect(timerDisplay).not.toBe('25:00');
+
+// Check service worker state
+const state = await popup.evaluate(async () => {
+  return await chrome.runtime.sendMessage({ type: 'GET_STATE' });
+});
+expect(state.isRunning).toBe(true);
+```
+
+## CI/CD Pipeline
+
+### GitHub Actions Workflow
+
+Located at `.github/workflows/ci.yml`. Runs on push and PR to `main`.
+
+**Jobs:**
+1. **test-build**: Install deps → Build extension → Run tests → Upload artifacts
+2. **release**: Create GitHub Release automatically (only on push to main)
+
+**Artifacts Generated:**
+- `playwright-report/`: HTML test report
+- `extension-zip`: Packaged extension
+- `test-results/`: JSON results
+
+**Auto-Release:**
+- Triggers on successful tests on main branch
+- Reads version from manifest.json
+- Creates GitHub Release with tag vX.Y.Z
+- Attaches extension.zip to release
+
+### Docker Containerization
+
+**Dockerfile:**
+- Base: `mcr.microsoft.com/playwright:v1.46.0-jammy`
+- Installs Node.js deps and Playwright/Chromium
+- Builds extension during image build
+- Default CMD: run tests
+
+**docker-compose.yml:**
+- Service `e2e` for running tests
+- Mounts source code as volumes for development
+- Sets `shm_size: 2gb` to prevent Chromium crashes
+- Preserves test reports and results in host
+
+## Future Enhancements (Beyond Intermediate Delivery)
+
+Ideas for final delivery:
 - Statistics dashboard with charts
 - Task management integration
 - Multiple timer profiles
 - Sync across devices using chrome.storage.sync
 - Customizable color themes
-- Browser notifications with custom text
 - Integration with productivity tools
+- Performance testing
+- Visual regression testing

@@ -1,0 +1,27 @@
+services:
+  e2e:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bootcamp/pomodoro-e2e:latest
+    container_name: pomodoro-e2e-tests
+    environment:
+      - CI=true
+      - NODE_ENV=test
+    volumes:
+      # Mount source code for development
+      - ./src:/app/src:ro
+      - ./icons:/app/icons:ro
+      - ./manifest.json:/app/manifest.json:ro
+      - ./tests:/app/tests:ro
+      - ./scripts:/app/scripts:ro
+      # Preserve test results and reports
+      - ./playwright-report:/app/playwright-report
+      - ./test-results:/app/test-results
+    working_dir: /app
+    command: npm run test:e2e
+    # Increase shared memory for Chromium (prevents crashes)
+    shm_size: 2gb
+    # Optional: set resource limits
+    mem_limit: 4g
+    cpus: 2

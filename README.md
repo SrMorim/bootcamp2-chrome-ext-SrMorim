@@ -1,8 +1,9 @@
 # 🍅 Bootcamp Pomodoro
 
-![Version](https://img.shields.io/badge/version-1.0.0-green)
+![Version](https://img.shields.io/badge/version-1.1.0-green)
 ![Manifest](https://img.shields.io/badge/manifest-v3-blue)
 ![License](https://img.shields.io/badge/license-MIT-orange)
+![CI](https://github.com/SrMorim/bootcamp2-chrome-ext-SrMorim/workflows/CI%2FCD%20-%20Build,%20Test%20%26%20Release/badge.svg)
 
 Timer Pomodoro simples e eficiente para Google Chrome. Gerencie seu tempo, aumente sua produtividade e mantenha o foco com a técnica Pomodoro.
 
@@ -10,7 +11,11 @@ Timer Pomodoro simples e eficiente para Google Chrome. Gerencie seu tempo, aumen
 
 ## 📋 Sobre o Projeto
 
-Esta extensão foi desenvolvida como **Entrega Inicial do Bootcamp II**, implementando um timer Pomodoro funcional e completo para navegadores Chrome. O projeto utiliza as melhores práticas de desenvolvimento de extensões com Manifest V3.
+Esta extensão foi desenvolvida como parte do **Bootcamp II**, implementando um timer Pomodoro funcional e completo para navegadores Chrome. O projeto utiliza as melhores práticas de desenvolvimento de extensões com Manifest V3.
+
+**Entregas:**
+- ✅ **Entrega Inicial (v1.0.0)**: Timer Pomodoro funcional com Manifest V3
+- ✅ **Entrega Intermediária (v1.1.0)**: Containerização Docker + CI/CD + Testes E2E
 
 ### ✨ Funcionalidades
 
@@ -79,11 +84,117 @@ Clique em "⚙️ Configurações" no popup para personalizar:
 - **Intervalo para Pausa Longa**: Após quantos pomodoros fazer pausa longa (padrão: 4)
 - **Sons de Alerta**: Ativar/desativar notificações sonoras
 
+## 🧪 Desenvolvimento e Testes
+
+### Pré-requisitos
+
+- Node.js 20+ e npm
+- Docker e Docker Compose (opcional, para testes containerizados)
+
+### Instalação para Desenvolvimento
+
+```bash
+# Clone o repositório
+git clone https://github.com/SrMorim/bootcamp2-chrome-ext-SrMorim.git
+cd bootcamp2-chrome-ext-SrMorim
+
+# Instale as dependências
+npm install
+
+# Build da extensão
+npm run build
+```
+
+### Comandos Disponíveis
+
+```bash
+# Build da extensão para dist/
+npm run build
+
+# Rodar testes E2E
+npm run test:e2e
+
+# Rodar testes com UI interativa
+npm run test:e2e:ui
+
+# Build + Testes (usado no CI)
+npm test
+
+# Instalar navegadores Playwright
+npm run playwright:install
+```
+
+### Testes End-to-End (E2E)
+
+O projeto inclui uma suíte completa de testes E2E usando **Playwright**:
+
+- ✅ **Carregamento da Extensão**: Verifica se a extensão é carregada corretamente
+- ✅ **Timer Funcionando**: Testa iniciar, pausar, resetar e pular
+- ✅ **Persistência**: Valida que o estado persiste após fechar o popup
+- ✅ **Página de Options**: Testa configurações customizáveis
+
+```bash
+# Rodar todos os testes
+npm run test:e2e
+
+# Ver relatório HTML dos testes
+npx playwright show-report
+```
+
+### Docker & Docker Compose
+
+#### Rodar Testes com Docker
+
+```bash
+# Build da imagem Docker
+docker compose build
+
+# Executar testes E2E no container
+docker compose run --rm e2e
+
+# Ou simplesmente
+docker compose up
+```
+
+#### Estrutura Docker
+
+- **Dockerfile**: Baseado em `mcr.microsoft.com/playwright` com Chromium pré-instalado
+- **docker-compose.yml**: Serviço `e2e` para rodar testes isolados
+- **Volumes**: Monta código-fonte para desenvolvimento iterativo
+- **shm_size: 2gb**: Evita crashes do Chromium por falta de memória compartilhada
+
+### CI/CD com GitHub Actions
+
+O projeto possui pipeline automatizada que:
+
+1. **Build**: Compila a extensão para `dist/`
+2. **Testes**: Executa todos os testes E2E com Playwright
+3. **Artefatos**: Publica relatórios e ZIP da extensão
+4. **Release**: Cria GitHub Release automaticamente (em push na `main`)
+
+#### Workflow
+
+- **Trigger**: Push ou Pull Request na branch `main`
+- **Jobs**:
+  - `test-build`: Instala deps, roda testes, gera artefatos
+  - `release`: Cria release automática se testes passarem
+
+#### Artefatos Gerados
+
+- `playwright-report/`: Relatório HTML dos testes
+- `extension-zip`: Arquivo ZIP da extensão
+- `test-results/`: Resultados em JSON
+
+Ver workflow em: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+
 ## 🏗️ Estrutura do Projeto
 
 ```
 bootcamp2-chrome-ext-SrMorim/
 ├── manifest.json                 # Configuração da extensão (Manifest V3)
+├── package.json                  # Dependências Node.js e scripts
+├── Dockerfile                    # Imagem Docker para testes E2E
+├── docker-compose.yml            # Orquestração de containers
 ├── icons/                        # Ícones da extensão (16, 32, 48, 128px)
 │   ├── icon16.png
 │   ├── icon32.png
@@ -107,16 +218,30 @@ bootcamp2-chrome-ext-SrMorim/
 │       └── sounds/
 │           ├── ding.wav
 │           └── complete.wav
+├── scripts/
+│   └── build-extension.mjs       # Script para build e empacotamento
+├── tests/                        # Testes E2E com Playwright
+│   ├── playwright.config.ts      # Configuração do Playwright
+│   ├── extension.spec.ts         # Testes de carregamento
+│   ├── timer.spec.ts             # Testes do timer
+│   ├── persistence.spec.ts       # Testes de persistência
+│   └── options.spec.ts           # Testes de configurações
+├── .github/
+│   └── workflows/
+│       └── ci.yml                # Pipeline CI/CD
 ├── docs/                         # GitHub Pages (landing page)
 │   ├── index.html
 │   ├── styles.css
 │   └── script.js
+├── dist/                         # Build da extensão (gerado)
 ├── README.md
+├── CLAUDE.md
 └── LICENSE
 ```
 
 ## 🔧 Tecnologias Utilizadas
 
+### Extensão Chrome
 - **Chrome Extension Manifest V3**: Framework moderno de extensões
 - **JavaScript (Vanilla)**: Sem dependências externas
 - **HTML5 & CSS3**: Interface responsiva e moderna
@@ -126,6 +251,13 @@ bootcamp2-chrome-ext-SrMorim/
   - `chrome.notifications`: Notificações do sistema
   - `chrome.runtime`: Comunicação entre componentes
   - `chrome.offscreen`: Reprodução de áudio (requisito MV3)
+
+### DevOps & Testes (Entrega Intermediária)
+- **Playwright**: Framework de testes E2E para navegadores
+- **Docker**: Containerização para ambiente reproduzível
+- **Docker Compose**: Orquestração de containers
+- **GitHub Actions**: CI/CD automatizado
+- **Node.js**: Runtime para build e testes
 
 ## 📦 Permissões Utilizadas
 
