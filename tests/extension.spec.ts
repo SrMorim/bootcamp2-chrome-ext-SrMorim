@@ -4,11 +4,12 @@ import { setupExtensionContext, cleanupExtensionContext } from './helpers.js';
 let context: BrowserContext;
 let extensionId: string;
 
-test.beforeAll(async () => {
+test.beforeAll(async ({}, testInfo) => {
+  testInfo.setTimeout(120000); // 120 seconds for extension loading
   const setup = await setupExtensionContext();
   context = setup.context;
   extensionId = setup.extensionId;
-}, 90000); // 90 second timeout for setup
+});
 
 test.afterAll(async () => {
   await cleanupExtensionContext(context);

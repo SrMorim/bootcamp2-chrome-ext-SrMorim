@@ -1,6 +1,7 @@
 import { chromium, type BrowserContext } from '@playwright/test';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distPath = path.resolve(__dirname, '..', 'dist');
@@ -18,6 +19,18 @@ export async function setupExtensionContext(): Promise<ExtensionContext> {
   console.log('🚀 Launching Chromium with extension...');
   console.log('📁 Extension path:', distPath);
 
+  // Verify dist directory exists
+  if (!fs.existsSync(distPath)) {
+    throw new Error(`Extension build directory not found: ${distPath}`);
+  }
+
+  const manifestPath = path.join(distPath, 'manifest.json');
+  if (!fs.existsSync(manifestPath)) {
+    throw new Error(`manifest.json not found in: ${distPath}`);
+  }
+
+  console.log('✅ Extension build verified');
+
   const context = await chromium.launchPersistentContext('', {
     headless: true,
     args: [
@@ -29,13 +42,23 @@ export async function setupExtensionContext(): Promise<ExtensionContext> {
       '--disable-gpu',
       '--disable-web-security',
       '--disable-features=IsolateOrigins,site-per-process',
+      '--disable-blink-features=AutomationControlled',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
     ],
   });
+
+  // Open a blank page to trigger browser initialization
+  console.log('🌐 Opening initial page to trigger browser initialization...');
+  const initialPage = await context.newPage();
+  await initialPage.goto('about:blank');
+  await initialPage.waitForLoadState('domcontentloaded');
 
   // Wait for service worker to be ready (robust method for CI)
   let extensionId: string | undefined;
   let attempts = 0;
-  const maxAttempts = 30; // 30 seconds
+  const maxAttempts = 60; // 60 seconds - more time for CI
 
   while (!extensionId && attempts < maxAttempts) {
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -59,9 +82,14 @@ export async function setupExtensionContext(): Promise<ExtensionContext> {
     attempts++;
 
     if (!extensionId && attempts < maxAttempts) {
-      console.log(`⏳ Waiting for extension... (${attempts}/${maxAttempts})`);
+      if (attempts % 10 === 0) {
+        console.log(`⏳ Waiting for extension... (${attempts}/${maxAttempts})`);
+      }
     }
   }
+
+  // Close initial page
+  await initialPage.close();
 
   if (!extensionId) {
     await context.close();
