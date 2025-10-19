@@ -52,17 +52,8 @@ export default defineConfig({
       name: 'chromium-with-extension',
       use: {
         ...devices['Desktop Chrome'],
-        headless: true,
-        launchOptions: {
-          args: [
-            `--disable-extensions-except=${distPath}`,
-            `--load-extension=${distPath}`,
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-          ],
-        },
+        // Browser launch is handled by helpers.ts setupExtensionContext()
+        // to ensure proper extension loading in headless mode
       },
     },
   ],

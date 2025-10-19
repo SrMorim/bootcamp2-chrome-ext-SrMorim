@@ -32,10 +32,13 @@ test.describe('Extension Loading', () => {
   });
 
   test('manifest should be valid', async () => {
-    const [page] = context.pages();
+    // Open popup to access chrome.runtime API
+    const popup = await context.newPage();
+    await popup.goto(`chrome-extension://${extensionId}/src/popup/popup.html`);
+    await popup.waitForLoadState('domcontentloaded');
 
     // Read manifest through extension API
-    const manifest = await page.evaluate(async () => {
+    const manifest = await popup.evaluate(async () => {
       return chrome.runtime.getManifest();
     });
 
@@ -43,12 +46,17 @@ test.describe('Extension Loading', () => {
     expect(manifest.name).toBe('Bootcamp Pomodoro');
     expect(manifest.version).toBe('1.1.0');
     expect(manifest.manifest_version).toBe(3);
+
+    await popup.close();
   });
 
   test('icons should be present', async () => {
-    const [page] = context.pages();
+    // Open popup to access chrome.runtime API
+    const popup = await context.newPage();
+    await popup.goto(`chrome-extension://${extensionId}/src/popup/popup.html`);
+    await popup.waitForLoadState('domcontentloaded');
 
-    const manifest = await page.evaluate(() => {
+    const manifest = await popup.evaluate(() => {
       return chrome.runtime.getManifest();
     });
 
@@ -57,12 +65,17 @@ test.describe('Extension Loading', () => {
     expect(manifest.icons['32']).toBeDefined();
     expect(manifest.icons['48']).toBeDefined();
     expect(manifest.icons['128']).toBeDefined();
+
+    await popup.close();
   });
 
   test('required permissions should be declared', async () => {
-    const [page] = context.pages();
+    // Open popup to access chrome.runtime API
+    const popup = await context.newPage();
+    await popup.goto(`chrome-extension://${extensionId}/src/popup/popup.html`);
+    await popup.waitForLoadState('domcontentloaded');
 
-    const manifest = await page.evaluate(() => {
+    const manifest = await popup.evaluate(() => {
       return chrome.runtime.getManifest();
     });
 
@@ -70,5 +83,7 @@ test.describe('Extension Loading', () => {
     expect(manifest.permissions).toContain('alarms');
     expect(manifest.permissions).toContain('notifications');
     expect(manifest.permissions).toContain('offscreen');
+
+    await popup.close();
   });
 });
