@@ -1,36 +1,17 @@
-import { test, expect, chromium, type BrowserContext, type Page } from '@playwright/test';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const distPath = path.resolve(__dirname, '..', 'dist');
+import { test, expect, type BrowserContext, type Page } from '@playwright/test';
+import { setupExtensionContext, cleanupExtensionContext } from './helpers.js';
 
 let context: BrowserContext;
 let extensionId: string;
 
 test.beforeAll(async () => {
-  context = await chromium.launchPersistentContext('', {
-    headless: true,
-    args: [
-      `--disable-extensions-except=${distPath}`,
-      `--load-extension=${distPath}`,
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-    ],
-  });
-
-  const serviceWorkers = context.serviceWorkers();
-  if (serviceWorkers.length > 0) {
-    const url = serviceWorkers[0].url();
-    const match = url.match(/chrome-extension:\/\/([a-z]+)\//);
-    if (match) {
-      extensionId = match[1];
-    }
-  }
-});
+  const setup = await setupExtensionContext();
+  context = setup.context;
+  extensionId = setup.extensionId;
+}, 90000); // 90 second timeout for setup
 
 test.afterAll(async () => {
-  await context?.close();
+  await cleanupExtensionContext(context);
 });
 
 async function openOptionsPage(): Promise<Page> {

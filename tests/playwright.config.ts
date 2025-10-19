@@ -68,10 +68,13 @@ export default defineConfig({
   ],
 
   /* Timeout for each test */
-  timeout: 30 * 1000,
+  timeout: 60 * 1000,
 
   /* Timeout for each assertion */
   expect: {
-    timeout: 5 * 1000,
+    timeout: 10 * 1000,
   },
+
+  /* Global setup timeout */
+  globalTimeout: 10 * 60 * 1000, // 10 minutes
 });

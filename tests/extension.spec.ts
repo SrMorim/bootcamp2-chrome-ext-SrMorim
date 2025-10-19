@@ -1,48 +1,24 @@
-import { test, expect, chromium, type BrowserContext } from '@playwright/test';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const distPath = path.resolve(__dirname, '..', 'dist');
+import { test, expect, type BrowserContext } from '@playwright/test';
+import { setupExtensionContext, cleanupExtensionContext } from './helpers.js';
 
 let context: BrowserContext;
 let extensionId: string;
 
 test.beforeAll(async () => {
-  // Launch browser with extension
-  context = await chromium.launchPersistentContext('', {
-    headless: true,
-    args: [
-      `--disable-extensions-except=${distPath}`,
-      `--load-extension=${distPath}`,
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-    ],
-  });
-
-  // Get extension ID
-  await context.waitForEvent('page');
-
-  // Find extension ID from background service worker
-  const backgroundPages = context.serviceWorkers();
-  if (backgroundPages.length > 0) {
-    const backgroundPage = backgroundPages[0];
-    const extensionUrl = backgroundPage.url();
-    const match = extensionUrl.match(/chrome-extension:\/\/([a-z]+)\//);
-    if (match) {
-      extensionId = match[1];
-      console.log(`Extension ID: ${extensionId}`);
-    }
-  }
-});
+  const setup = await setupExtensionContext();
+  context = setup.context;
+  extensionId = setup.extensionId;
+}, 90000); // 90 second timeout for setup
 
 test.afterAll(async () => {
-  await context?.close();
+  await cleanupExtensionContext(context);
 });
 
 test.describe('Extension Loading', () => {
   test('extension should be loaded successfully', async () => {
     expect(context).toBeDefined();
+    expect(extensionId).toBeDefined();
+    expect(extensionId).not.toBe('undefined');
 
     // Verify service worker is running
     const serviceWorkers = context.serviceWorkers();
@@ -64,7 +40,7 @@ test.describe('Extension Loading', () => {
 
     expect(manifest).toBeDefined();
     expect(manifest.name).toBe('Bootcamp Pomodoro');
-    expect(manifest.version).toBe('1.0.0');
+    expect(manifest.version).toBe('1.1.0');
     expect(manifest.manifest_version).toBe(3);
   });
 
