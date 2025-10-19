@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações - Bootcamp Pomodoro</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🍅 Configurações do Pomodoro</h1>
+      <p class="subtitle">Personalize os tempos do seu timer</p>
+    </header>
+
+    <main>
+      <form id="settingsForm">
+        <div class="section">
+          <h2>⏱️ Durações (minutos)</h2>
+
+          <div class="form-group">
+            <label for="focusDuration">
+              <span class="label-text">Tempo de Foco</span>
+              <span class="label-hint">Quanto tempo você quer focar?</span>
+            </label>
+            <input type="number" id="focusDuration" min="1" max="60" value="25" required>
+            <span class="input-suffix">minutos</span>
+          </div>
+
+          <div class="form-group">
+            <label for="shortBreakDuration">
+              <span class="label-text">Pausa Curta</span>
+              <span class="label-hint">Pequeno intervalo entre sessões</span>
+            </label>
+            <input type="number" id="shortBreakDuration" min="1" max="30" value="5" required>
+            <span class="input-suffix">minutos</span>
+          </div>
+
+          <div class="form-group">
+            <label for="longBreakDuration">
+              <span class="label-text">Pausa Longa</span>
+              <span class="label-hint">Intervalo maior após várias sessões</span>
+            </label>
+            <input type="number" id="longBreakDuration" min="5" max="60" value="15" required>
+            <span class="input-suffix">minutos</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>🔔 Preferências</h2>
+
+          <div class="form-group">
+            <label for="longBreakInterval">
+              <span class="label-text">Intervalo para Pausa Longa</span>
+              <span class="label-hint">Após quantos pomodoros fazer pausa longa?</span>
+            </label>
+            <input type="number" id="longBreakInterval" min="2" max="10" value="4" required>
+            <span class="input-suffix">pomodoros</span>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label for="soundEnabled" class="checkbox-label">
+              <input type="checkbox" id="soundEnabled" checked>
+              <span class="label-text">Ativar Sons de Alerta</span>
+              <span class="label-hint">Tocar som quando o timer terminar</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">Salvar Configurações</button>
+          <button type="button" id="resetBtn" class="btn btn-secondary">Restaurar Padrões</button>
+        </div>
+
+        <div id="status" class="status hidden"></div>
+      </form>
+    </main>
+
+    <footer>
+      <p>Bootcamp Pomodoro v1.0.0 | Técnica Pomodoro para produtividade</p>
+    </footer>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

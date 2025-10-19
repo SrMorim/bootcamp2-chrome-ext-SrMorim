@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bootcamp Pomodoro</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🍅 Bootcamp Pomodoro</h1>
+    </header>
+
+    <main>
+      <div class="timer-section">
+        <div class="mode-display" id="modeDisplay">Foco</div>
+        <div class="timer-display" id="timerDisplay">25:00</div>
+        <div class="session-count">
+          Pomodoros: <span id="sessionCount">0</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="startBtn" class="btn btn-primary">Iniciar</button>
+        <button id="pauseBtn" class="btn btn-secondary" disabled>Pausar</button>
+        <button id="resetBtn" class="btn btn-tertiary">Resetar</button>
+        <button id="skipBtn" class="btn btn-skip">Pular</button>
+      </div>
+
+      <div class="mode-tabs">
+        <button class="tab-btn active" data-mode="focus">Foco</button>
+        <button class="tab-btn" data-mode="shortBreak">Pausa Curta</button>
+        <button class="tab-btn" data-mode="longBreak">Pausa Longa</button>
+      </div>
+    </main>
+
+    <footer>
+      <a href="../options/options.html" target="_blank" class="settings-link">
+        ⚙️ Configurações
+      </a>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

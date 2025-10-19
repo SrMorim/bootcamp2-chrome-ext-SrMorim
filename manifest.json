@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Bootcamp Pomodoro",
+  "version": "1.0.0",
+  "description": "Timer Pomodoro simples e eficiente para gerenciar seu tempo e aumentar produtividade. Entrega inicial do Bootcamp II.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Bootcamp Pomodoro Timer",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background/service-worker.js"
+  },
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications",
+    "offscreen"
+  ],
+  "options_page": "src/options/options.html"
+}
