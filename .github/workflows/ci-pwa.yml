@@ -26,15 +26,15 @@ jobs:
 
       - name: Install web dependencies
         working-directory: apps/web
-        run: npm ci
+        run: npm install
 
       - name: Install API dependencies
         working-directory: apps/api
-        run: npm ci
+        run: npm install
 
       - name: Install E2E test dependencies
         working-directory: tests/e2e
-        run: npm ci
+        run: npm install
 
       - name: Install Playwright browsers
         working-directory: tests/e2e
@@ -118,7 +118,7 @@ jobs:
 
       - name: Install web dependencies
         working-directory: apps/web
-        run: npm ci
+        run: npm install
 
       - name: Build web for GitHub Pages
         working-directory: apps/web
@@ -166,5 +166,5 @@ jobs:
 
       - name: Test docker-compose
         run: |
-          docker-compose config
+          docker compose config
           echo "✓ docker-compose.yml is valid"
