@@ -1,0 +1,14 @@
+{
+  "name": "@bootcamp/e2e-tests",
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report ../../playwright-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.46.0"
+  }
+}

@@ -1,28 +1,36 @@
 {
-  "name": "bootcamp-pomodoro",
-  "version": "1.1.0",
-  "description": "Timer Pomodoro para Chrome - Entrega Intermediária com Docker e CI/CD",
+  "name": "bootcamp-pomodoro-pwa",
+  "version": "2.0.0",
+  "description": "Pomodoro Timer PWA - Entrega Final com Backend + Docker + CI/CD",
   "type": "module",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "apps/api"
+  ],
   "scripts": {
-    "build": "node scripts/build-extension.mjs",
-    "test:e2e": "playwright test --reporter=list,html",
-    "test:e2e:ui": "playwright test --ui",
-    "test": "npm run build && npm run test:e2e",
-    "ci": "npm ci && npm run test",
-    "playwright:install": "playwright install --with-deps chromium"
+    "install:all": "npm install && cd apps/web && npm install && cd ../api && npm install",
+    "dev:web": "cd apps/web && npm run dev",
+    "dev:api": "cd apps/api && npm run dev",
+    "build:web": "cd apps/web && npm run build",
+    "start:api": "cd apps/api && npm start",
+    "docker:up": "docker-compose up --build",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "test:e2e": "cd tests/e2e && npm run test",
+    "test:unit": "cd apps/api && npm test"
   },
   "keywords": [
     "pomodoro",
     "timer",
-    "chrome-extension",
+    "pwa",
     "productivity",
-    "manifest-v3"
+    "progressive-web-app"
   ],
   "author": "SrMorim",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "^1.46.0",
-    "archiver": "^7.0.0"
+    "@playwright/test": "^1.46.0"
   },
   "engines": {
     "node": ">=20.0.0"

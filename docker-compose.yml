@@ -1,27 +1,56 @@
+version: '3.8'
+
 services:
-  e2e:
+  # Backend API
+  api:
     build:
-      context: .
+      context: ./apps/api
       dockerfile: Dockerfile
-    image: bootcamp/pomodoro-e2e:latest
-    container_name: pomodoro-e2e-tests
+    container_name: bootcamp-pomodoro-api
+    ports:
+      - "3000:3000"
     environment:
-      - CI=true
-      - NODE_ENV=test
-    volumes:
-      # Mount source code for development
-      - ./src:/app/src:ro
-      - ./icons:/app/icons:ro
-      - ./manifest.json:/app/manifest.json:ro
-      - ./tests:/app/tests:ro
-      - ./scripts:/app/scripts:ro
-      # Preserve test results and reports
-      - ./playwright-report:/app/playwright-report
-      - ./test-results:/app/test-results
-    working_dir: /app
-    command: npm run test:e2e
-    # Increase shared memory for Chromium (prevents crashes)
-    shm_size: 2gb
-    # Optional: set resource limits
-    mem_limit: 4g
-    cpus: 2
+      - NODE_ENV=production
+      - PORT=3000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - pomodoro-network
+
+  # Frontend PWA
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:3000
+    container_name: bootcamp-pomodoro-web
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - pomodoro-network
+
+networks:
+  pomodoro-network:
+    driver: bridge
+
+# Usage:
+# docker-compose up --build          # Build and start services
+# docker-compose down                # Stop and remove containers
+# docker-compose logs -f web         # View web logs
+# docker-compose logs -f api         # View API logs

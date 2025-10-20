@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Timer Pomodoro PWA para aumentar produtividade">
+  <meta name="theme-color" content="#27ae60">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-512.png">
+  <title>Bootcamp Pomodoro PWA</title>
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      <!-- Header -->
+      <header>
+        <h1>🍅 Bootcamp Pomodoro</h1>
+        <p class="subtitle">Seu timer de produtividade</p>
+      </header>
+
+      <!-- Timer Section -->
+      <main>
+        <div class="timer-section">
+          <div class="mode-display" id="modeDisplay">Foco</div>
+          <div class="timer-display" id="timerDisplay">25:00</div>
+          <div class="session-count">
+            Pomodoros: <span id="sessionCount">0</span>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+          <button id="startBtn" class="btn btn-primary">
+            <span>▶</span> Iniciar
+          </button>
+          <button id="pauseBtn" class="btn btn-secondary" disabled>
+            <span>⏸</span> Pausar
+          </button>
+          <button id="resetBtn" class="btn btn-tertiary">
+            <span>↻</span> Resetar
+          </button>
+          <button id="skipBtn" class="btn btn-skip">
+            <span>⏭</span> Pular
+          </button>
+        </div>
+
+        <!-- Mode Tabs -->
+        <div class="mode-tabs">
+          <button class="tab-btn active" data-mode="focus">
+            Foco (25min)
+          </button>
+          <button class="tab-btn" data-mode="shortBreak">
+            Pausa (5min)
+          </button>
+          <button class="tab-btn" data-mode="longBreak">
+            Longa (15min)
+          </button>
+        </div>
+
+        <!-- Quote Section (shown during breaks) -->
+        <div class="quote-section" id="quoteSection" style="display: none;">
+          <div class="quote-card">
+            <p class="quote-text" id="quoteText">Carregando...</p>
+            <p class="quote-author" id="quoteAuthor"></p>
+          </div>
+        </div>
+      </main>
+
+      <!-- Tabs Navigation -->
+      <nav class="nav-tabs">
+        <button class="nav-btn active" data-tab="timer">
+          <span>⏱</span> Timer
+        </button>
+        <button class="nav-btn" data-tab="history">
+          <span>📊</span> Histórico
+        </button>
+        <button class="nav-btn" data-tab="settings">
+          <span>⚙️</span> Config
+        </button>
+      </nav>
+
+      <!-- Tab Contents -->
+      <div class="tab-content">
+        <!-- Timer Tab (default - already shown above) -->
+
+        <!-- History Tab -->
+        <div class="tab-pane" id="historyTab" style="display: none;">
+          <h2>Histórico de Sessões</h2>
+          <div class="stats-summary">
+            <div class="stat-card">
+              <div class="stat-value" id="totalSessions">0</div>
+              <div class="stat-label">Sessões Totais</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="totalTime">0h</div>
+              <div class="stat-label">Tempo Total</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="todaySessions">0</div>
+              <div class="stat-label">Hoje</div>
+            </div>
+          </div>
+          <div class="sessions-list" id="sessionsList">
+            <p class="empty-state">Nenhuma sessão registrada ainda.</p>
+          </div>
+          <button id="clearHistoryBtn" class="btn btn-danger">
+            🗑️ Limpar Histórico
+          </button>
+        </div>
+
+        <!-- Settings Tab -->
+        <div class="tab-pane" id="settingsTab" style="display: none;">
+          <h2>Configurações</h2>
+          <form class="settings-form">
+            <div class="form-group">
+              <label for="focusDuration">Duração Foco (minutos)</label>
+              <input type="number" id="focusDuration" min="1" max="60" value="25">
+            </div>
+            <div class="form-group">
+              <label for="shortBreakDuration">Pausa Curta (minutos)</label>
+              <input type="number" id="shortBreakDuration" min="1" max="30" value="5">
+            </div>
+            <div class="form-group">
+              <label for="longBreakDuration">Pausa Longa (minutos)</label>
+              <input type="number" id="longBreakDuration" min="1" max="60" value="15">
+            </div>
+            <div class="form-group">
+              <label for="longBreakInterval">Pausa longa a cada (pomodoros)</label>
+              <input type="number" id="longBreakInterval" min="2" max="10" value="4">
+            </div>
+            <div class="form-group checkbox">
+              <input type="checkbox" id="soundEnabled" checked>
+              <label for="soundEnabled">Som habilitado</label>
+            </div>
+            <div class="form-group checkbox">
+              <input type="checkbox" id="notificationsEnabled" checked>
+              <label for="notificationsEnabled">Notificações habilitadas</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <button type="button" id="restoreDefaultsBtn" class="btn btn-tertiary">
+              Restaurar Padrões
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer>
+        <p>
+          <span id="onlineStatus" class="status-badge online">● Online</span>
+          | PWA v2.0.0 |
+          <a href="https://github.com/SrMorim/bootcamp2-chrome-ext-SrMorim" target="_blank">GitHub</a>
+        </p>
+      </footer>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

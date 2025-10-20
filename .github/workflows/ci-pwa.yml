@@ -1,0 +1,170 @@
+name: CI/CD - PWA Build, Test & Deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    name: Build & Test PWA + API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Install API dependencies
+        working-directory: apps/api
+        run: npm ci
+
+      - name: Install E2E test dependencies
+        working-directory: tests/e2e
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: tests/e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Build web PWA
+        working-directory: apps/web
+        run: npm run build
+
+      - name: Start API server (background)
+        working-directory: apps/api
+        run: |
+          npm start &
+          sleep 5
+          curl http://localhost:3000/api/health || exit 1
+
+      - name: Preview web (background)
+        working-directory: apps/web
+        run: |
+          npm run preview &
+          sleep 5
+          curl http://localhost:8080/health || curl http://localhost:8080 || exit 1
+
+      - name: Run E2E tests
+        working-directory: tests/e2e
+        run: npm test
+        env:
+          E2E_BASE_URL: http://localhost:8080
+          API_URL: http://localhost:3000
+
+      - name: Run Lighthouse CI
+        if: always()
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun --collect.url=http://localhost:8080 --upload.target=temporary-public-storage || true
+        continue-on-error: true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: apps/web/dist/
+          retention-days: 90
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Build web for GitHub Pages
+        working-directory: apps/web
+        run: npm run build
+        env:
+          VITE_API_URL: https://bootcamp-pomodoro-api.onrender.com
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./apps/web/dist
+          cname: false
+
+  docker-build:
+    name: Test Docker Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/api
+          file: ./apps/api/Dockerfile
+          push: false
+          tags: bootcamp-pomodoro-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build web Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/web
+          file: ./apps/web/Dockerfile
+          push: false
+          tags: bootcamp-pomodoro-web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test docker-compose
+        run: |
+          docker-compose config
+          echo "✓ docker-compose.yml is valid"
