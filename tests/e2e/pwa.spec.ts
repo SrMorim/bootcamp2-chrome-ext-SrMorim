@@ -15,9 +15,9 @@ test.describe('PWA Tests', () => {
   test('should have valid manifest', async ({ page }) => {
     await page.goto(BASE_URL);
 
-    // Check manifest link
+    // Check manifest link (Vite-PWA injects it automatically)
     const manifestLink = page.locator('link[rel="manifest"]');
-    await expect(manifestLink).toHaveCount(0); // Vite-PWA injects manifest differently
+    await expect(manifestLink).toHaveCount(1);
 
     // Check if manifest is accessible
     const manifestResponse = await page.request.get(`${BASE_URL}/manifest.webmanifest`);
@@ -154,12 +154,24 @@ test.describe('PWA Tests', () => {
     const viewport = page.locator('meta[name="viewport"]');
     await expect(viewport).toHaveAttribute('content', /width=device-width/);
 
-    // Check icons are accessible
-    const icon192Response = await page.request.get(`${BASE_URL}/icons/icon-192.png`);
-    expect(icon192Response.ok()).toBeTruthy();
+    // Check icons are accessible by getting their URLs from the HTML
+    const iconLink = page.locator('link[rel="icon"]');
+    const iconHref = await iconLink.getAttribute('href');
+    expect(iconHref).toBeTruthy();
 
-    const icon512Response = await page.request.get(`${BASE_URL}/icons/icon-512.png`);
-    expect(icon512Response.ok()).toBeTruthy();
+    // Test icon accessibility using the actual URL from the page
+    const iconUrl = new URL(iconHref!, page.url()).href;
+    const iconResponse = await page.request.get(iconUrl);
+    expect(iconResponse.ok()).toBeTruthy();
+
+    // Check apple-touch-icon
+    const appleTouchIcon = page.locator('link[rel="apple-touch-icon"]');
+    const appleTouchHref = await appleTouchIcon.getAttribute('href');
+    expect(appleTouchHref).toBeTruthy();
+
+    const appleTouchUrl = new URL(appleTouchHref!, page.url()).href;
+    const appleTouchResponse = await page.request.get(appleTouchUrl);
+    expect(appleTouchResponse.ok()).toBeTruthy();
   });
 
   test('should work offline (service worker caching)', async ({ page, context }) => {
