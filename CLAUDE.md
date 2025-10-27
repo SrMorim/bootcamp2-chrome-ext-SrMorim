@@ -4,283 +4,443 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Bootcamp Pomodoro** is a Chrome extension that implements a Pomodoro timer with customizable settings. This is part of the Bootcamp II project, built with Chrome Extension Manifest V3.
+**Bootcamp Pomodoro PWA** - Progressive Web App with Node.js backend implementing a Pomodoro timer with session history, statistics, and motivational quotes. Built as part of Bootcamp II final delivery.
 
-**Deliveries:**
-- v1.0.0: Initial delivery - Functional Pomodoro timer with Manifest V3
-- v1.1.0: Intermediate delivery - Docker + CI/CD + E2E Tests with Playwright
+**Version:** 2.0.0
+
+**Stack:**
+- Frontend: Vite + Vanilla JS + PWA Plugin
+- Backend: Node.js + Express
+- Testing: Playwright (E2E)
+- Containerization: Docker + Docker Compose
+- CI/CD: GitHub Actions + GitHub Pages
 
 ## Project Type
 
-Chrome Extension (Manifest V3) - Pomodoro Timer with E2E Testing & CI/CD
-
-## Key Features
-
-- Timer with three modes: Focus (25min), Short Break (5min), Long Break (15min)
-- Customizable durations through options page
-- Sound alerts when sessions complete
-- Session counter
-- State persistence using chrome.storage
-- Auto-transition between modes
-- Badge showing remaining time
+Progressive Web App (PWA) with RESTful API backend - Monorepo with workspaces
 
 ## Development Commands
 
 ### Setup
 
 ```bash
-# Install dependencies
+# Install all dependencies (root + apps)
 npm install
 
-# Install Playwright browsers
-npm run playwright:install
+# Or install individually
+cd apps/web && npm install
+cd apps/api && npm install
+cd tests/e2e && npm install && npx playwright install chromium
 ```
 
-### Build & Test
+### Development
 
 ```bash
-# Build extension to dist/
-npm run build
+# Run web dev server (Vite HMR on port 8080)
+npm run dev:web
 
-# Run E2E tests
+# Run API dev server (Node watch mode on port 3000)
+npm run dev:api
+
+# Run both in separate terminals for full development
+```
+
+### Build & Preview
+
+```bash
+# Build web PWA for production
+npm run build:web
+
+# Preview production build
+cd apps/web && npm run preview
+```
+
+### Testing
+
+```bash
+# Run all E2E tests (requires web + API running)
 npm run test:e2e
 
-# Run tests with UI (interactive mode)
-npm run test:e2e:ui
+# Run API unit tests (16 tests - sessions + quotes)
+npm run test:unit
+# Or directly:
+cd apps/api && npm test
 
-# Full CI flow (build + test)
-npm test
+# Run E2E tests with UI (interactive mode)
+cd tests/e2e && npm run test:ui
+
+# Run E2E tests in headed mode (see browser)
+cd tests/e2e && npm run test:headed
+
+# View Playwright report
+cd tests/e2e && npm run report
 ```
 
-### Docker Commands
+### Lighthouse CI
 
 ```bash
-# Build Docker image
-docker compose build
+# Run Lighthouse CI locally
+npx @lhci/cli@0.12.x autorun --config=.lighthouserc.js
 
-# Run tests in container
-docker compose run --rm e2e
-
-# Or simply
-docker compose up
-
-# View Playwright report after tests
-npx playwright show-report
+# Requires web server running on localhost:8080
 ```
 
-### Manual Testing in Chrome
+### Docker
 
 ```bash
-# 1. Build the extension
-npm run build
+# Build and start all services
+docker-compose up --build
 
-# 2. Open chrome://extensions
-# 3. Enable "Developer mode"
-# 4. Click "Load unpacked"
-# 5. Select the dist/ directory
-```
+# Or use npm scripts
+npm run docker:up
 
-### Helper Scripts
+# Stop services
+npm run docker:down
 
-```bash
-# Regenerate icons (if needed)
-python3 create_simple_icons.py
+# View logs
+npm run docker:logs
 
-# Regenerate sounds (if needed)
-python3 create_sounds.py
+# Access:
+# - Web PWA: http://localhost:8080
+# - API: http://localhost:3000
 ```
 
 ## Architecture
 
-### Manifest V3 Structure
+### Monorepo Structure
 
-- **manifest.json**: Extension configuration with permissions (storage, alarms, notifications, offscreen)
-- **Popup** (`src/popup/`): Main UI - timer display and controls
-- **Service Worker** (`src/background/service-worker.js`): Timer logic, alarms, notifications
-- **Options Page** (`src/options/`): Settings for customizing durations
-- **Offscreen Document** (`src/assets/offscreen.html`): Required for audio playback in MV3
+```
+apps/
+├── web/          # Frontend PWA (Vite)
+│   ├── src/
+│   │   ├── main.js        # UI initialization & event handlers
+│   │   ├── timer.js       # Timer class (localStorage state)
+│   │   ├── api-client.js  # API communication layer
+│   │   └── styles.css
+│   ├── public/icons/
+│   ├── vite.config.js     # PWA manifest + service worker config
+│   └── Dockerfile
+│
+├── api/          # Backend API (Express)
+│   ├── src/
+│   │   ├── index.js              # Express app & routes
+│   │   ├── routes/sessions.js    # Sessions CRUD endpoints
+│   │   └── services/quotes.js    # Quotable API proxy
+│   └── Dockerfile
+│
+tests/e2e/        # E2E tests (Playwright)
+├── pwa.spec.ts   # PWA functionality tests
+└── api.spec.ts   # API endpoint tests
+
+docker-compose.yml  # Multi-container orchestration
+```
 
 ### Communication Flow
 
 ```
-Popup UI ←→ Service Worker ←→ Chrome Storage
-    ↓              ↓
-  Display      Alarms/Notifications
+Browser PWA ←→ API Client ←→ Express API ←→ In-Memory Store
+     ↓              ↓              ↓
+localStorage   Service Worker  Quotable API
 ```
 
 ### State Management
 
-The timer state is managed in the service worker and persisted to chrome.storage.local:
-- `mode`: Current mode (focus/shortBreak/longBreak)
-- `timeRemaining`: Seconds remaining
-- `isRunning`: Boolean timer state
-- `sessionsCompleted`: Number of completed pomodoros
-- `settings`: User preferences
+**Frontend (apps/web/src/timer.js):**
+- Timer state persisted to `localStorage` (mode, timeRemaining, isRunning, sessionsCompleted)
+- Settings persisted to `localStorage` (durations, sound, notifications)
+- `Timer` class manages state + tick interval + callbacks
 
-## Important Files
+**Backend (apps/api/src/routes/sessions.js):**
+- Sessions stored in-memory array (resets on server restart)
+- Simple CRUD operations with validation
+- Statistics aggregation on-demand
 
-### Core Extension Files
+### PWA Configuration
 
-- `manifest.json` - Extension configuration (Manifest V3)
-- `src/popup/popup.js` - UI logic and chrome.runtime messaging
-- `src/background/service-worker.js` - Timer engine using chrome.alarms API
-- `src/options/options.js` - Settings management
+**Service Worker (apps/web/vite.config.js):**
+- Workbox with `autoUpdate` strategy
+- Caches: static assets, API responses (NetworkFirst), quotes API
+- Offline support with cached fallbacks
 
-### Supporting Files
+**Manifest:**
+- `base: '/bootcamp2-chrome-ext-SrMorim/'` for GitHub Pages deployment
+- Standalone display mode
+- Icons: 192x192 and 512x512 (maskable)
 
-- `icons/` - Extension icons (16, 32, 48, 128px)
-- `src/assets/sounds/` - Alert sounds (WAV format)
-- `docs/` - GitHub Pages landing page
+## API Endpoints
 
-## Chrome APIs Used
+**Base URL:** `http://localhost:3000`
 
-- **chrome.storage**: Persist timer state and settings
-- **chrome.alarms**: Create recurring 1-second timer ticks
-- **chrome.notifications**: Show completion notifications
-- **chrome.runtime**: Message passing between popup and service worker
-- **chrome.action**: Update badge text with remaining time
-- **chrome.offscreen**: Create offscreen document for audio playback
+- `GET /api/health` - Health check
+- `GET /api/quote` - Get random motivational quote (proxied from Quotable)
+- `GET /api/sessions` - List all sessions (sorted by completedAt desc)
+- `GET /api/sessions/:id` - Get specific session
+- `GET /api/sessions/stats` - Get statistics (total, today, thisWeek, byMode)
+- `POST /api/sessions` - Create session (body: `{mode, duration, completedAt}`)
+- `DELETE /api/sessions/:id` - Delete session
+- `DELETE /api/sessions` - Clear all sessions
 
-## Development Notes
+**Validation:**
+- `mode` must be: `focus`, `shortBreak`, or `longBreak`
+- `duration` must be positive number
+- Returns 400 for validation errors, 404 for not found, 500 for server errors
 
-### Testing Checklist
+## Important Files & Patterns
 
-When making changes, test:
-1. Start/pause/reset timer functions
-2. Mode switching (manual and auto-transition)
-3. Settings persistence
-4. Sound alerts (if enabled)
-5. Badge updates
-6. State persistence after closing popup
-7. Notifications on completion
+### Frontend Entry Point (apps/web/src/main.js)
 
-### Common Issues
+Main UI controller that:
+- Initializes `Timer` instance
+- Handles button clicks (start, pause, reset, skip, mode switching)
+- Updates DOM every second (timer display, mode UI, session counter)
+- Fetches and displays motivational quotes
+- Manages session history view and statistics
+- Calls `apiClient` to persist completed sessions
 
-- **Sounds not playing**: Offscreen document permission required in Manifest V3
-- **Timer not updating**: Check chrome.alarms is firing (periodInMinutes: 1/60)
-- **State lost**: Ensure chrome.storage.local.set() is called after state changes
-- **Badge not showing**: Chrome limits badge text to 4 characters
+### Timer Logic (apps/web/src/timer.js)
 
-### File Modification Guidelines
+Timer class with:
+- State persistence via localStorage
+- Tick callbacks (called every second when running)
+- Complete callbacks (called when timer reaches 0)
+- Auto-mode-switching based on session count
+- Sound/notification support
 
-- **manifest.json**: Only modify if adding new permissions or resources
-- **service-worker.js**: Timer logic lives here - be careful with alarm management
-- **popup.js**: Updates UI every second - keep updateUI() function performant
-- **options.js**: Settings changes must notify service worker via chrome.runtime.sendMessage
+### API Client (apps/web/src/api-client.js)
 
-## Deployment
+Abstraction layer for API calls:
+- Configurable `API_URL` (defaults to localhost:3000 or window.API_URL)
+- Error handling with fallbacks
+- Methods: `createSession()`, `getSessions()`, `getStats()`, `getQuote()`
 
-### GitHub Pages
+### Docker Configuration
 
-The `docs/` folder contains a landing page deployed to GitHub Pages:
-- Enable Pages in repo settings: Settings → Pages → Source: main branch, /docs folder
-- Site will be available at: https://srmorim.github.io/bootcamp2-chrome-ext-SrMorim/
+**apps/api/Dockerfile:**
+- Base: node:20-alpine
+- Runs `npm start` (production mode)
+- Exposes port 3000
 
-### Release Process
+**apps/web/Dockerfile:**
+- Multi-stage: build with node:20-alpine, serve with nginx:alpine
+- Copies dist/ to nginx html directory
+- Exposes port 80 (mapped to 8080 in docker-compose)
 
-1. Update version in manifest.json
-2. Create ZIP: `zip -r bootcamp-pomodoro-vX.Y.Z.zip manifest.json icons/ src/`
-3. Create GitHub release with tag vX.Y.Z
-4. Attach ZIP file to release
-5. Update landing page download link
-
-## Project Structure
-
-```
-├── manifest.json          # Extension manifest (MV3)
-├── icons/                 # Extension icons
-├── src/
-│   ├── popup/            # Main UI
-│   ├── background/       # Service worker (timer logic)
-│   ├── options/          # Settings page
-│   └── assets/           # Sounds and offscreen document
-├── docs/                 # GitHub Pages site
-├── README.md             # User documentation
-└── LICENSE               # MIT License
-```
-
-## E2E Testing (Intermediate Delivery)
-
-### Test Structure
-
-Tests are located in `tests/` and use Playwright to test the extension in Chromium:
-
-- **extension.spec.ts**: Extension loading, manifest validation, permissions
-- **timer.spec.ts**: Timer functionality (start, pause, reset, skip, countdown)
-- **persistence.spec.ts**: State persistence across popup reopens
-- **options.spec.ts**: Settings page functionality
-
-### Test Configuration
-
-- **playwright.config.ts**: Configures Chromium with extension loaded
-- Headless mode for CI
-- Loads extension from `dist/` directory
-- Generates HTML reports and screenshots on failure
-
-### Writing New Tests
-
-```typescript
-// Open popup
-const popup = await openPopup();
-
-// Interact with elements
-await popup.click('#startBtn');
-await popup.waitForTimeout(2000);
-
-// Assert state
-const timerDisplay = await popup.locator('#timerDisplay').textContent();
-expect(timerDisplay).not.toBe('25:00');
-
-// Check service worker state
-const state = await popup.evaluate(async () => {
-  return await chrome.runtime.sendMessage({ type: 'GET_STATE' });
-});
-expect(state.isRunning).toBe(true);
-```
+**docker-compose.yml:**
+- Two services: `api` and `web`
+- Health checks on both services
+- `web` depends on `api` health check
+- Custom bridge network `pomodoro-network`
+- API_URL build arg for web service
 
 ## CI/CD Pipeline
 
-### GitHub Actions Workflow
-
-Located at `.github/workflows/ci.yml`. Runs on push and PR to `main`.
+**File:** `.github/workflows/ci-pwa.yml`
 
 **Jobs:**
-1. **test-build**: Install deps → Build extension → Run tests → Upload artifacts
-2. **release**: Create GitHub Release automatically (only on push to main)
+1. **build-test**: Install deps → Run API unit tests → Build web → Start API & web preview → Run E2E tests → Run Lighthouse CI (with enforcement) → Upload artifacts
+2. **deploy**: Build web with production API_URL → Deploy to GitHub Pages (on push to main)
+3. **docker-build**: Test Docker builds for both services → Validate docker-compose config
 
-**Artifacts Generated:**
-- `playwright-report/`: HTML test report
-- `extension-zip`: Packaged extension
-- `test-results/`: JSON results
+**Artifacts:**
+- `playwright-report/` - HTML test report (E2E)
+- `test-results/` - JSON results (E2E)
+- `lighthouse-report/` - Lighthouse CI results + assertions
+- `web-dist/` - Built PWA
 
-**Auto-Release:**
-- Triggers on successful tests on main branch
-- Reads version from manifest.json
-- Creates GitHub Release with tag vX.Y.Z
-- Attaches extension.zip to release
+**Quality Gates:**
+- ✅ API unit tests must pass (16 tests)
+- ✅ E2E tests must pass (16 tests)
+- ✅ Lighthouse scores ≥ 80 (enforced by .lighthouserc.js)
 
-### Docker Containerization
+**Environment Variables:**
+- `E2E_BASE_URL` - Base URL for E2E tests (default: http://localhost:8080)
+- `API_URL` - API base URL for API tests (default: http://localhost:3000)
+- `VITE_API_URL` - Build-time API URL for production (GitHub Pages uses Render backend)
+- `LHCI_GITHUB_APP_TOKEN` - Optional Lighthouse CI GitHub App token
 
-**Dockerfile:**
-- Base: `mcr.microsoft.com/playwright:v1.46.0-jammy`
-- Installs Node.js deps and Playwright/Chromium
-- Builds extension during image build
-- Default CMD: run tests
+## Testing Strategy
 
-**docker-compose.yml:**
-- Service `e2e` for running tests
-- Mounts source code as volumes for development
-- Sets `shm_size: 2gb` to prevent Chromium crashes
-- Preserves test reports and results in host
+### Unit Tests (apps/api/src/)
 
-## Future Enhancements (Beyond Intermediate Delivery)
+**Sessions Routes (sessions.test.js) - 12 tests:**
+- POST /api/sessions: creates valid sessions, rejects invalid data
+- GET /api/sessions: returns all sessions sorted correctly
+- GET /api/sessions/stats: calculates statistics (total, today, thisWeek, byMode)
+- DELETE /api/sessions: clears all sessions
+- Validates: mode (focus/shortBreak/longBreak), duration (positive number), required fields
 
-Ideas for final delivery:
-- Statistics dashboard with charts
-- Task management integration
-- Multiple timer profiles
-- Sync across devices using chrome.storage.sync
-- Customizable color themes
-- Integration with productivity tools
-- Performance testing
-- Visual regression testing
+**Quotes Service (quotes.test.js) - 4 tests:**
+- getRandomQuote: returns quotes with required fields (content, author, tags)
+- Fallback mechanism: always returns valid quote even on API failure
+- Integration tests with real Quotable API calls
+
+**Running:** `cd apps/api && npm test` (uses Node.js test runner)
+
+### E2E Tests (tests/e2e/)
+
+**PWA Tests (pwa.spec.ts) - 8 tests:**
+- Homepage loads with correct title and header
+- Manifest is valid and accessible at `/manifest.webmanifest`
+- Service worker registers successfully
+- Timer controls work (start, pause, reset, skip)
+- Mode switching works (focus, shortBreak, longBreak)
+- Session counter increments on completion
+- Offline mode works (service worker caches assets)
+- PWA installability criteria
+
+**API Tests (api.spec.ts) - 8 tests:**
+- Health endpoint returns ok status
+- Quote endpoint returns valid quote structure
+- Sessions CRUD operations (create, list, get by id, delete)
+- Statistics endpoint aggregates correctly
+- Validation errors return 400 status
+- Not found returns 404 status
+
+### Lighthouse CI (Quality Metrics)
+
+**Configuration:** `.lighthouserc.js`
+
+**Thresholds (all ≥ 80):**
+- Performance: 80+
+- PWA: 80+
+- Accessibility: 80+
+- Best Practices: 80+
+- SEO: 80+
+
+**Critical Assertions:**
+- Service Worker functional
+- Installable manifest
+- Splash screen configured
+- Themed omnibox
+- ARIA attributes valid
+- Color contrast compliance
+- All interactive elements labeled
+
+### Running Tests Locally
+
+1. Build web: `cd apps/web && npm run build`
+2. Start API: `cd apps/api && npm start` (background)
+3. Start preview: `cd apps/web && npm run preview` (background)
+4. Run tests: `cd tests/e2e && npm test`
+
+## Development Notes
+
+### Adding New Timer Features
+
+1. Update `Timer` class in `apps/web/src/timer.js` for state logic
+2. Update UI handlers in `apps/web/src/main.js`
+3. Update localStorage schema if needed (remember migration)
+4. Add E2E tests in `tests/e2e/pwa.spec.ts`
+
+### Adding New API Endpoints
+
+1. Add route handler in `apps/api/src/routes/sessions.js` or new route file
+2. Import and mount in `apps/api/src/index.js`
+3. Update `apps/web/src/api-client.js` with new method
+4. Add E2E tests in `tests/e2e/api.spec.ts`
+5. Add validation and error handling
+
+### Modifying PWA Behavior
+
+**Service Worker/Caching:**
+- Edit `apps/web/vite.config.js` → `workbox.runtimeCaching`
+- Be careful with caching strategies (NetworkFirst, CacheFirst, StaleWhileRevalidate)
+
+**Manifest:**
+- Edit `apps/web/vite.config.js` → `manifest` object
+- Update icons in `apps/web/public/icons/` if needed
+
+**Base Path (GitHub Pages):**
+- `base: '/bootcamp2-chrome-ext-SrMorim/'` in vite.config.js
+- Must match repository name for GitHub Pages deployment
+
+### Accessibility
+
+**ARIA Implementation:**
+- All interactive elements have `aria-label` or visible label
+- Timer display uses `role="timer"` with `aria-live="polite"`
+- Status updates use `aria-live` regions
+- Mode buttons use `aria-pressed` states
+- Tab panels use `role="tabpanel"` with `aria-labelledby`
+- Form inputs have `aria-describedby` for hints
+- Screen-reader only text uses `.sr-only` CSS class
+
+**Keyboard Navigation:**
+- All controls accessible via keyboard
+- Focus management for tab switching
+- Skip links for main content (if needed)
+
+**Semantic HTML:**
+- Proper heading hierarchy (h1 → h2)
+- `<main>`, `<nav>`, `<footer>` landmarks
+- `role` attributes for custom widgets
+
+### Common Issues
+
+**API not reachable from PWA:**
+- Check `VITE_API_URL` environment variable during build
+- Check CORS is enabled in API (it is by default)
+- In dev: API runs on 3000, web on 8080
+- In Docker: API on 3000, web on 80 (mapped to 8080)
+
+**Service worker not updating:**
+- Hard refresh (Ctrl+Shift+R)
+- Clear application cache in DevTools
+- Vite PWA uses `autoUpdate` strategy (should auto-update)
+
+**Tests failing:**
+- Ensure API and web preview are running
+- Check ports 3000 and 8080 are available
+- Verify `E2E_BASE_URL` and `API_URL` env vars
+- Check Playwright browsers are installed: `npx playwright install chromium`
+
+**Docker build fails:**
+- Ensure npm dependencies are installed in each app
+- Check Dockerfile COPY paths are correct
+- Verify docker-compose health checks are not timing out
+
+**Lighthouse CI fails:**
+- Check web server is running on correct port (8080)
+- Verify `.lighthouserc.js` configuration
+- Review assertions - may need to relax thresholds temporarily
+- Common issues: missing aria-labels, color contrast, tap targets
+
+**Unit tests fail:**
+- Ensure all dependencies installed: `cd apps/api && npm install`
+- Check Node version (requires ≥18 for test runner)
+- Integration tests may fail if external API (Quotable) is down - fallback should still pass
+
+### Performance Considerations
+
+- Timer UI updates every second - keep `updateUI()` lightweight
+- API sessions endpoint returns all sessions - may need pagination for production
+- In-memory sessions storage - use database for persistence
+- Service worker caches can grow - monitor cache size in production
+
+## Deployment
+
+### GitHub Pages (Automated)
+
+CI/CD automatically deploys to GitHub Pages on push to main:
+- Builds web with production API_URL (Render backend)
+- Deploys to `gh-pages` branch
+- Available at: https://srmorim.github.io/bootcamp2-chrome-ext-SrMorim/
+
+### Docker Deployment
+
+```bash
+# Production deployment
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop
+docker-compose down
+```
+
+## Deliveries & Versions
+
+- **v2.0.0** (Final): PWA + Backend + Docker + CI/CD + E2E Tests
+- **v1.1.0** (Intermediate): Docker + CI/CD + E2E Tests (Chrome extension)
+- **v1.0.0** (Initial): Chrome Extension with Manifest V3

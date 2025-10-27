@@ -19,46 +19,46 @@
       </header>
 
       <!-- Timer Section -->
-      <main>
+      <main role="main" aria-label="Timer Pomodoro">
         <div class="timer-section">
-          <div class="mode-display" id="modeDisplay">Foco</div>
-          <div class="timer-display" id="timerDisplay">25:00</div>
-          <div class="session-count">
+          <div class="mode-display" id="modeDisplay" aria-label="Modo atual">Foco</div>
+          <div class="timer-display" id="timerDisplay" role="timer" aria-live="polite" aria-atomic="true">25:00</div>
+          <div class="session-count" role="status" aria-live="polite">
             Pomodoros: <span id="sessionCount">0</span>
           </div>
         </div>
 
         <!-- Controls -->
-        <div class="controls">
-          <button id="startBtn" class="btn btn-primary">
-            <span>▶</span> Iniciar
+        <div class="controls" role="group" aria-label="Controles do timer">
+          <button id="startBtn" class="btn btn-primary" aria-label="Iniciar timer">
+            <span aria-hidden="true">▶</span> Iniciar
           </button>
-          <button id="pauseBtn" class="btn btn-secondary" disabled>
-            <span>⏸</span> Pausar
+          <button id="pauseBtn" class="btn btn-secondary" disabled aria-label="Pausar timer">
+            <span aria-hidden="true">⏸</span> Pausar
           </button>
-          <button id="resetBtn" class="btn btn-tertiary">
-            <span>↻</span> Resetar
+          <button id="resetBtn" class="btn btn-tertiary" aria-label="Resetar timer">
+            <span aria-hidden="true">↻</span> Resetar
           </button>
-          <button id="skipBtn" class="btn btn-skip">
-            <span>⏭</span> Pular
+          <button id="skipBtn" class="btn btn-skip" aria-label="Pular para próxima sessão">
+            <span aria-hidden="true">⏭</span> Pular
           </button>
         </div>
 
         <!-- Mode Tabs -->
-        <div class="mode-tabs">
-          <button class="tab-btn active" data-mode="focus">
+        <div class="mode-tabs" role="group" aria-label="Seleção de modo">
+          <button class="tab-btn active" data-mode="focus" aria-label="Modo foco de 25 minutos" aria-pressed="true">
             Foco (25min)
           </button>
-          <button class="tab-btn" data-mode="shortBreak">
+          <button class="tab-btn" data-mode="shortBreak" aria-label="Pausa curta de 5 minutos" aria-pressed="false">
             Pausa (5min)
           </button>
-          <button class="tab-btn" data-mode="longBreak">
+          <button class="tab-btn" data-mode="longBreak" aria-label="Pausa longa de 15 minutos" aria-pressed="false">
             Longa (15min)
           </button>
         </div>
 
         <!-- Quote Section (shown during breaks) -->
-        <div class="quote-section" id="quoteSection" style="display: none;">
+        <div class="quote-section" id="quoteSection" style="display: none;" role="complementary" aria-label="Frase motivacional">
           <div class="quote-card">
             <p class="quote-text" id="quoteText">Carregando...</p>
             <p class="quote-author" id="quoteAuthor"></p>
@@ -67,15 +67,15 @@
       </main>
 
       <!-- Tabs Navigation -->
-      <nav class="nav-tabs">
-        <button class="nav-btn active" data-tab="timer">
-          <span>⏱</span> Timer
+      <nav class="nav-tabs" role="navigation" aria-label="Navegação principal">
+        <button class="nav-btn active" data-tab="timer" aria-label="Ver timer" aria-current="page">
+          <span aria-hidden="true">⏱</span> Timer
         </button>
-        <button class="nav-btn" data-tab="history">
-          <span>📊</span> Histórico
+        <button class="nav-btn" data-tab="history" aria-label="Ver histórico de sessões">
+          <span aria-hidden="true">📊</span> Histórico
         </button>
-        <button class="nav-btn" data-tab="settings">
-          <span>⚙️</span> Config
+        <button class="nav-btn" data-tab="settings" aria-label="Ver configurações">
+          <span aria-hidden="true">⚙️</span> Config
         </button>
       </nav>
 
@@ -84,60 +84,64 @@
         <!-- Timer Tab (default - already shown above) -->
 
         <!-- History Tab -->
-        <div class="tab-pane" id="historyTab" style="display: none;">
+        <div class="tab-pane" id="historyTab" style="display: none;" role="tabpanel" aria-labelledby="history-tab">
           <h2>Histórico de Sessões</h2>
-          <div class="stats-summary">
+          <div class="stats-summary" role="region" aria-label="Estatísticas de produtividade">
             <div class="stat-card">
-              <div class="stat-value" id="totalSessions">0</div>
+              <div class="stat-value" id="totalSessions" aria-label="Total de sessões completadas">0</div>
               <div class="stat-label">Sessões Totais</div>
             </div>
             <div class="stat-card">
-              <div class="stat-value" id="totalTime">0h</div>
+              <div class="stat-value" id="totalTime" aria-label="Tempo total de foco">0h</div>
               <div class="stat-label">Tempo Total</div>
             </div>
             <div class="stat-card">
-              <div class="stat-value" id="todaySessions">0</div>
+              <div class="stat-value" id="todaySessions" aria-label="Sessões completadas hoje">0</div>
               <div class="stat-label">Hoje</div>
             </div>
           </div>
-          <div class="sessions-list" id="sessionsList">
+          <div class="sessions-list" id="sessionsList" role="list" aria-label="Lista de sessões">
             <p class="empty-state">Nenhuma sessão registrada ainda.</p>
           </div>
-          <button id="clearHistoryBtn" class="btn btn-danger">
-            🗑️ Limpar Histórico
+          <button id="clearHistoryBtn" class="btn btn-danger" aria-label="Limpar todo o histórico de sessões">
+            <span aria-hidden="true">🗑️</span> Limpar Histórico
           </button>
         </div>
 
         <!-- Settings Tab -->
-        <div class="tab-pane" id="settingsTab" style="display: none;">
+        <div class="tab-pane" id="settingsTab" style="display: none;" role="tabpanel" aria-labelledby="settings-tab">
           <h2>Configurações</h2>
-          <form class="settings-form">
+          <form class="settings-form" aria-label="Formulário de configurações do timer">
             <div class="form-group">
               <label for="focusDuration">Duração Foco (minutos)</label>
-              <input type="number" id="focusDuration" min="1" max="60" value="25">
+              <input type="number" id="focusDuration" min="1" max="60" value="25" aria-required="true" aria-describedby="focus-desc">
+              <span id="focus-desc" class="sr-only">Defina a duração da sessão de foco entre 1 e 60 minutos</span>
             </div>
             <div class="form-group">
               <label for="shortBreakDuration">Pausa Curta (minutos)</label>
-              <input type="number" id="shortBreakDuration" min="1" max="30" value="5">
+              <input type="number" id="shortBreakDuration" min="1" max="30" value="5" aria-required="true" aria-describedby="short-break-desc">
+              <span id="short-break-desc" class="sr-only">Defina a duração da pausa curta entre 1 e 30 minutos</span>
             </div>
             <div class="form-group">
               <label for="longBreakDuration">Pausa Longa (minutos)</label>
-              <input type="number" id="longBreakDuration" min="1" max="60" value="15">
+              <input type="number" id="longBreakDuration" min="1" max="60" value="15" aria-required="true" aria-describedby="long-break-desc">
+              <span id="long-break-desc" class="sr-only">Defina a duração da pausa longa entre 1 e 60 minutos</span>
             </div>
             <div class="form-group">
               <label for="longBreakInterval">Pausa longa a cada (pomodoros)</label>
-              <input type="number" id="longBreakInterval" min="2" max="10" value="4">
+              <input type="number" id="longBreakInterval" min="2" max="10" value="4" aria-required="true" aria-describedby="interval-desc">
+              <span id="interval-desc" class="sr-only">Defina após quantos pomodoros ocorre uma pausa longa</span>
             </div>
             <div class="form-group checkbox">
-              <input type="checkbox" id="soundEnabled" checked>
+              <input type="checkbox" id="soundEnabled" checked aria-label="Habilitar sons de notificação">
               <label for="soundEnabled">Som habilitado</label>
             </div>
             <div class="form-group checkbox">
-              <input type="checkbox" id="notificationsEnabled" checked>
+              <input type="checkbox" id="notificationsEnabled" checked aria-label="Habilitar notificações do sistema">
               <label for="notificationsEnabled">Notificações habilitadas</label>
             </div>
-            <button type="submit" class="btn btn-primary">Salvar</button>
-            <button type="button" id="restoreDefaultsBtn" class="btn btn-tertiary">
+            <button type="submit" class="btn btn-primary" aria-label="Salvar configurações">Salvar</button>
+            <button type="button" id="restoreDefaultsBtn" class="btn btn-tertiary" aria-label="Restaurar configurações padrão">
               Restaurar Padrões
             </button>
           </form>
@@ -145,11 +149,11 @@
       </div>
 
       <!-- Footer -->
-      <footer>
+      <footer role="contentinfo">
         <p>
-          <span id="onlineStatus" class="status-badge online">● Online</span>
+          <span id="onlineStatus" class="status-badge online" role="status" aria-live="polite">● Online</span>
           | PWA v2.0.0 |
-          <a href="https://github.com/SrMorim/bootcamp2-chrome-ext-SrMorim" target="_blank">GitHub</a>
+          <a href="https://github.com/SrMorim/bootcamp2-chrome-ext-SrMorim" target="_blank" rel="noopener noreferrer" aria-label="Ver código fonte no GitHub (abre em nova aba)">GitHub</a>
         </p>
       </footer>
     </div>
