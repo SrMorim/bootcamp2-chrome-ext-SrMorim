@@ -1,1 +1,0 @@
-if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/bootcamp2-chrome-ext-SrMorim/sw.js', { scope: '/bootcamp2-chrome-ext-SrMorim/' })})}
