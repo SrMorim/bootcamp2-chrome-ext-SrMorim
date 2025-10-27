@@ -19,8 +19,13 @@ test.describe('PWA Tests', () => {
     const manifestLink = page.locator('link[rel="manifest"]');
     await expect(manifestLink).toHaveCount(1);
 
-    // Check if manifest is accessible
-    const manifestResponse = await page.request.get(`${BASE_URL}/manifest.webmanifest`);
+    // Get manifest URL from HTML (works with any base path)
+    const manifestHref = await manifestLink.getAttribute('href');
+    expect(manifestHref).toBeTruthy();
+
+    // Construct full URL and check if manifest is accessible
+    const manifestUrl = new URL(manifestHref!, page.url()).href;
+    const manifestResponse = await page.request.get(manifestUrl);
     expect(manifestResponse.ok()).toBeTruthy();
 
     const manifest = await manifestResponse.json();
