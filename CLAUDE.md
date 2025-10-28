@@ -80,7 +80,7 @@ cd tests/e2e && npm run report
 
 ```bash
 # Run Lighthouse CI locally
-npx @lhci/cli@0.12.x autorun --config=.lighthouserc.js
+npx @lhci/cli@0.12.x autorun --config=.lighthouserc.cjs
 
 # Requires web server running on localhost:8080
 ```
@@ -250,7 +250,7 @@ Abstraction layer for API calls:
 **Quality Gates:**
 - ✅ API unit tests must pass (16 tests)
 - ✅ E2E tests must pass (16 tests)
-- ✅ Lighthouse scores ≥ 80 (enforced by .lighthouserc.js)
+- ✅ Lighthouse scores ≥ 80 (enforced by .lighthouserc.cjs)
 
 **Environment Variables:**
 - `E2E_BASE_URL` - Base URL for E2E tests (default: http://localhost:8080)
@@ -298,7 +298,7 @@ Abstraction layer for API calls:
 
 ### Lighthouse CI (Quality Metrics)
 
-**Configuration:** `.lighthouserc.js`
+**Configuration:** `.lighthouserc.cjs`
 
 **Thresholds (all ≥ 80):**
 - Performance: 80+
@@ -401,7 +401,7 @@ Abstraction layer for API calls:
 
 **Lighthouse CI fails:**
 - Check web server is running on correct port (8080)
-- Verify `.lighthouserc.js` configuration
+- Verify `.lighthouserc.cjs` configuration
 - Review assertions - may need to relax thresholds temporarily
 - Common issues: missing aria-labels, color contrast, tap targets
 
@@ -409,6 +409,13 @@ Abstraction layer for API calls:
 - Ensure all dependencies installed: `cd apps/api && npm install`
 - Check Node version (requires ≥18 for test runner)
 - Integration tests may fail if external API (Quotable) is down - fallback should still pass
+
+**GitHub Pages Jekyll errors:**
+- Error: "No such file or directory @ dir_chdir0 - /github/workspace/docs"
+- Cause: GitHub Pages settings configured to use "GitHub Actions" instead of "Deploy from a branch"
+- Fix: Repository Settings → Pages → Source → Change to "Deploy from a branch" (gh-pages / root)
+- The `.nojekyll` file prevents Jekyll processing, but only if Pages is configured correctly
+- Verify `.nojekyll` exists in `apps/web/public/` and is copied to build output
 
 ### Performance Considerations
 
@@ -423,8 +430,16 @@ Abstraction layer for API calls:
 
 CI/CD automatically deploys to GitHub Pages on push to main:
 - Builds web with production API_URL (Render backend)
-- Deploys to `gh-pages` branch
+- Deploys to `gh-pages` branch via `peaceiris/actions-gh-pages@v3`
+- `.nojekyll` file included in build (prevents Jekyll processing)
 - Available at: https://srmorim.github.io/bootcamp2-chrome-ext-SrMorim/
+
+**GitHub Pages Configuration (Repository Settings):**
+- Source: **Deploy from a branch** (NOT "GitHub Actions")
+- Branch: `gh-pages` / `/ (root)`
+- This prevents automatic Jekyll builds and serves pre-built PWA directly
+
+**Note:** The `.nojekyll` file in `apps/web/public/.nojekyll` is automatically copied to `dist/` during Vite build, ensuring GitHub Pages treats the site as static HTML rather than Jekyll source.
 
 ### Docker Deployment
 
