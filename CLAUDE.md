@@ -238,7 +238,7 @@ Abstraction layer for API calls:
 
 **Jobs:**
 1. **build-test**: Install deps → Run API unit tests → Build web → Start API & web preview → Run E2E tests → Run Lighthouse CI (with enforcement) → Upload artifacts
-2. **deploy**: Build web with production API_URL → Deploy to GitHub Pages (on push to main)
+2. **deploy**: Build web with production API_URL → Upload as Pages artifact → Deploy to GitHub Pages via official Actions (on push to main)
 3. **docker-build**: Test Docker builds for both services → Validate docker-compose config
 
 **Artifacts:**
@@ -410,12 +410,13 @@ Abstraction layer for API calls:
 - Check Node version (requires ≥18 for test runner)
 - Integration tests may fail if external API (Quotable) is down - fallback should still pass
 
-**GitHub Pages Jekyll errors:**
-- Error: "No such file or directory @ dir_chdir0 - /github/workspace/docs"
-- Cause: GitHub Pages settings configured to use "GitHub Actions" instead of "Deploy from a branch"
-- Fix: Repository Settings → Pages → Source → Change to "Deploy from a branch" (gh-pages / root)
-- The `.nojekyll` file prevents Jekyll processing, but only if Pages is configured correctly
-- Verify `.nojekyll` exists in `apps/web/public/` and is copied to build output
+**GitHub Pages deployment fails:**
+- Check that workflow has correct permissions (pages: write, id-token: write)
+- Verify `actions/configure-pages@v5`, `actions/upload-pages-artifact@v3`, and `actions/deploy-pages@v4` are used
+- Check that environment `github-pages` is configured in workflow
+- Review deployment logs in Actions tab for specific errors
+- If migrating from branch-based deployment, old `gh-pages` branch can remain (won't interfere)
+- Repository Settings → Pages → Source should show "GitHub Actions" after first successful deploy
 
 ### Performance Considerations
 
@@ -428,18 +429,30 @@ Abstraction layer for API calls:
 
 ### GitHub Pages (Automated)
 
-CI/CD automatically deploys to GitHub Pages on push to main:
+CI/CD automatically deploys to GitHub Pages on push to main using the official GitHub Actions method:
 - Builds web with production API_URL (Render backend)
-- Deploys to `gh-pages` branch via `peaceiris/actions-gh-pages@v3`
-- `.nojekyll` file included in build (prevents Jekyll processing)
+- Uploads build as Pages artifact via `actions/upload-pages-artifact@v3`
+- Deploys using `actions/deploy-pages@v4` (official method)
 - Available at: https://srmorim.github.io/bootcamp2-chrome-ext-SrMorim/
 
-**GitHub Pages Configuration (Repository Settings):**
-- Source: **Deploy from a branch** (NOT "GitHub Actions")
-- Branch: `gh-pages` / `/ (root)`
-- This prevents automatic Jekyll builds and serves pre-built PWA directly
+**Deployment Method (GitHub Actions Artifact):**
+- Uses official GitHub Actions: `configure-pages`, `upload-pages-artifact`, `deploy-pages`
+- Automatically configures repository to use "GitHub Actions" as Pages source
+- Disables Jekyll processing automatically (no `.nojekyll` needed)
+- Environment: `github-pages` with deployment URL tracking
+- Concurrency control prevents simultaneous deploys
 
-**Note:** The `.nojekyll` file in `apps/web/public/.nojekyll` is automatically copied to `dist/` during Vite build, ensuring GitHub Pages treats the site as static HTML rather than Jekyll source.
+**Advantages over branch-based deployment:**
+- No separate `gh-pages` branch needed
+- 100% controlled by CI/CD workflow
+- Automatic Jekyll disabling (no configuration needed)
+- Better integration with GitHub environments and deployment protection
+- Official method recommended by GitHub since 2022
+
+**Repository Settings (Auto-configured):**
+After first successful deploy, GitHub automatically sets:
+- Source: **GitHub Actions** (auto-detected)
+- No manual configuration required
 
 ### Docker Deployment
 
